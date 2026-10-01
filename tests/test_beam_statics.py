@@ -44,6 +44,10 @@ def test_central_point_load_reactions_shear_and_bending_moment() -> None:
     assert result.maximum_bending_moment_position.value == pytest.approx(5)
     assert result.shear_force_points[1].shear_left.value == pytest.approx(500)
     assert result.shear_force_points[1].shear_right.value == pytest.approx(-500)
+    assert result.calculation_trace[0].result.to("N") == pytest.approx(-1000)
+    assert result.calculation_trace[1].result.to("N*m") == pytest.approx(-5000)
+    assert result.calculation_trace[2].result.to("N") == pytest.approx(500)
+    assert result.calculation_trace[3].result.to("N") == pytest.approx(500)
 
 
 def test_off_center_point_load_reactions_and_peak_moment() -> None:
@@ -64,6 +68,29 @@ def test_off_center_point_load_reactions_and_peak_moment() -> None:
     assert [reaction.force.value for reaction in result.support_reactions] == pytest.approx([600, 400])
     assert result.maximum_absolute_bending_moment.value == pytest.approx(2400)
     assert result.maximum_bending_moment_position.value == pytest.approx(4)
+
+
+def test_interior_supports_produce_the_expected_symmetric_solution() -> None:
+    beam = BeamSpec(
+        length=quantity(10, "m"),
+        supports=[
+            SupportSpec(kind="pin", position=quantity(2, "m")),
+            SupportSpec(kind="roller", position=quantity(8, "m")),
+        ],
+        point_loads=[
+            PointLoad(
+                position=quantity(5, "m"),
+                magnitude=quantity(1000, "N"),
+                direction="down",
+            )
+        ],
+    )
+
+    result = solve_beam(beam)
+
+    assert [reaction.force.value for reaction in result.support_reactions] == pytest.approx([500, 500])
+    assert result.maximum_absolute_bending_moment.value == pytest.approx(1500)
+    assert result.maximum_bending_moment_position.value == pytest.approx(5)
 
 
 def test_uniformly_distributed_load_has_quadratic_moment_diagram() -> None:
@@ -87,6 +114,32 @@ def test_uniformly_distributed_load_has_quadratic_moment_diagram() -> None:
     assert result.maximum_absolute_bending_moment.value == pytest.approx(1250)
     assert len(result.diagram_segments) == 1
     assert result.diagram_segments[0].shear_slope.value == pytest.approx(-100)
+    assert result.calculation_trace[0].result.to("N") == pytest.approx(-1000)
+    assert result.calculation_trace[1].result.to("N*m") == pytest.approx(-5000)
+
+
+def test_calculation_trace_records_load_resultants_and_reaction_equations() -> None:
+    beam = BeamSpec(
+        length=quantity(10, "m"),
+        supports=simply_supported(),
+        point_loads=[
+            PointLoad(
+                position=quantity(4, "m"),
+                magnitude=quantity(1000, "N"),
+                direction="down",
+            )
+        ],
+    )
+
+    result = solve_beam(beam)
+
+    assert len(result.calculation_trace) == 4
+    assert result.calculation_trace[0].result.to("N") == pytest.approx(-1000)
+    assert "-1000 N" in result.calculation_trace[0].substitution
+    assert result.calculation_trace[1].result.to("N*m") == pytest.approx(-4000)
+    assert result.calculation_trace[2].equation == "R_B = -M_A / (x_B - x_A)"
+    assert result.calculation_trace[2].result.to("N") == pytest.approx(400)
+    assert result.calculation_trace[3].result.to("N") == pytest.approx(600)
 
 
 def test_applied_counterclockwise_moment_creates_moment_jump() -> None:
@@ -109,6 +162,8 @@ def test_applied_counterclockwise_moment_creates_moment_jump() -> None:
     assert center.moment_left.value == pytest.approx(500)
     assert center.moment_right.value == pytest.approx(-500)
     assert result.maximum_absolute_bending_moment.value == pytest.approx(500)
+    assert result.calculation_trace[1].result.to("N*m") == pytest.approx(1000)
+    assert "+1000 N·m" in result.calculation_trace[1].substitution
 
 
 def test_beam_round_trips_through_json() -> None:

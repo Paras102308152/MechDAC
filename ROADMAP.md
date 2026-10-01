@@ -20,11 +20,11 @@ Roadmap status reflects code that exists and has been verified, not planned arch
 
 ## Phase 4 — Calculation transparency
 
-**In progress.** Add auditable load resultants and support-reaction equilibrium substitutions to the structured result and CLI. Then assess a small SFD/BMD plotting option; plotted values should come from returned diagram segments and must not recalculate statics.
+**Complete for calculation transparency.** Results contain the signed external force resultant, moment about support A, reaction equations/substitutions, and numerical results with units. CLI text prints the trace and JSON includes it with piecewise SFD/BMD data. A plot renderer is deferred; output already provides exact segment coefficients without introducing a plotting dependency.
 
 ## Phase 5 — Shaft design
 
-Extend the beam foundation with torque and a critical shaft section, then add stress and sizing methods with explicit standards/criteria, assumptions, analytical verification, and design checks. Keep those equations in solver modules.
+**Next.** Begin with a clearly scoped solid-round-shaft static bending/torsion screen, separate material/design inputs from equations, document the chosen generic yield criterion, and verify against analytical cases. Do not represent a generic criterion as ASME/AGMA/ISO compliance. Defer fatigue, stress concentrations, standard-diameter tables, and broader shaft-system coupling until justified.
 
 ## Phase 6 — Additional mechanical primitives
 

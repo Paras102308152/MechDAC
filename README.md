@@ -18,7 +18,7 @@ python -m pip install '.[dev]'
 mechdac beam solve examples/simple_beam.yaml
 ```
 
-The command prints support reactions, maximum absolute shear and bending moment, assumptions, and warnings. JSON input is also supported. To print the complete structured result as JSON:
+The command prints support reactions, maximum absolute shear and bending moment, the reaction calculation trace, assumptions, and warnings. JSON input is also supported. To print the complete structured result as JSON:
 
 ```bash
 mechdac beam solve examples/simple_beam.yaml --format json

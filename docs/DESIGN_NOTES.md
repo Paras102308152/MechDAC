@@ -32,6 +32,10 @@ The segment coefficients use canonical units: shear in N, shear slope in N/m, mo
 
 The solver searches event-side values and interval endpoints for peak shear/moment. Under a uniform load, it also checks the internal location where shear is zero, which is a stationary bending-moment point. Only one location is reported for a tied absolute maximum.
 
+## Reaction calculation trace
+
+The result records four auditable steps: total external vertical force, external moment about the left support A, right support reaction from moment equilibrium, and left support reaction from vertical force equilibrium. Distributed loads are reduced to their signed resultant at the interval centroid for this equilibrium trace. Applied couples enter the moment sum directly. Each step carries the equation, substituted values, and unit-bearing result. Shear/moment interval polynomials then expose how those reactions and loads continue through the beam.
+
 ## Serialization and units
 
 `QuantityValue` serializes as a finite scalar and a Pint unit expression. Schemas validate dimensional compatibility; the solver converts to canonical SI values before arithmetic. Pydantic JSON methods can serialize the beam input and structured result. Unknown schema fields are rejected.
@@ -40,4 +44,4 @@ The CLI accepts a mapping at the document root, with beam fields matching `BeamS
 
 ## Not implemented
 
-There is no varying distributed-load function, calculation trace showing individual load contributions, plot renderer, YAML/JSON loader, CLI, beam deflection, axial force, gear force, bearing behavior, shaft torsion/stress, standards rating, CAD, optimization, or reporting. These are future decisions, not implicit behavior of the current solver.
+There is no varying distributed-load function, diagram plot renderer, beam deflection, axial force, gear force, bearing behavior, shaft torsion/stress, standards rating, CAD, optimization, or reporting. These are future decisions, not implicit behavior of the current solver.

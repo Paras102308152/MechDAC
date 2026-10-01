@@ -46,6 +46,15 @@ class DiagramSegment(DomainModel):
     moment_slope: QuantityValue
 
 
+class CalculationTraceEntry(DomainModel):
+    """A readable equilibrium equation with its numeric substitution and result."""
+
+    name: str
+    equation: str
+    substitution: str
+    result: QuantityValue
+
+
 class BeamAnalysisResult(DomainModel):
     """Reactions and piecewise SFD/BMD data from a beam statics solution."""
 
@@ -53,6 +62,7 @@ class BeamAnalysisResult(DomainModel):
     shear_force_points: tuple[ShearForcePoint, ...]
     bending_moment_points: tuple[BendingMomentPoint, ...]
     diagram_segments: tuple[DiagramSegment, ...]
+    calculation_trace: tuple[CalculationTraceEntry, ...] = ()
     maximum_absolute_shear: QuantityValue
     maximum_absolute_bending_moment: QuantityValue
     maximum_bending_moment_position: QuantityValue

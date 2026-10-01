@@ -48,4 +48,14 @@
 
 **Alternatives considered:** Require Python callers only; use a different command structure; add a report or plotting dependency as part of the first CLI.
 
-**Consequences:** PyYAML is the only new runtime dependency. Parsing, validation, solving, and display have separate boundaries. CLI output does not yet show a step-by-step calculation trace or plot.
+**Consequences:** PyYAML is the only new runtime dependency. Parsing, validation, solving, and display have separate boundaries. CLI output includes a numeric reaction trace; plotting remains deferred.
+
+## 2026-10-01 — Include equilibrium substitutions in beam results
+
+**Decision:** Store the external force resultant, moment about support A, and both support-reaction equations/substitutions as structured trace entries. Show them in text CLI output and include them in JSON results.
+
+**Reason:** Reactions are the first consequential derived values in a beam calculation. Showing their signed load contributions helps students audit the result while keeping presentation separate from solver math.
+
+**Alternatives considered:** Return only final reactions; emit unstructured log text from the solver; introduce a symbolic algebra dependency.
+
+**Consequences:** Trace entries have an equation, numeric substitution, and unit-bearing result. Piecewise diagram coefficients expose the remaining shear/moment behavior. This is a numerical trace, not a symbolic equation engine or standards-compliance report.

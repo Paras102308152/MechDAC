@@ -17,7 +17,7 @@ The current modules are:
 - `mechdac.core.units`: `QuantityValue`, one Pint registry, and common Pydantic configuration (`extra="forbid"`, assignment validation).
 - `mechdac.core.schema`: physical beam, support, point-load, distributed-load, and applied-moment inputs. It validates unit dimensions, directions, positive magnitudes, support count/type, and beam bounds. It contains no engineering equations.
 - `mechdac.solvers.beam`: equilibrium reactions plus piecewise shear and bending moment calculations. It owns the sign conventions used by this solver.
-- `mechdac.core.results`: Pydantic output models with reactions, left/right event values, polynomial segment coefficients, extrema, assumptions, warnings, and solver metadata.
+- `mechdac.core.results`: Pydantic output models with reactions, left/right event values, polynomial segment coefficients, extrema, calculation trace, assumptions, warnings, and solver metadata.
 - `mechdac.cli`: argparse-based `mechdac beam solve` command. It reads JSON with the standard library and YAML with `yaml.safe_load`, validates with `BeamSpec`, then calls the same solver API. Text is the default output; `--format json` serializes the complete Pydantic result.
 
 Packaging uses a `src/` layout. Pydantic v2 and Pint are runtime dependencies; pytest is a development extra. The supported Python version is 3.12 or later.
@@ -30,7 +30,7 @@ The first model is determinate by construction: exactly two distinct supports, o
 
 ## Intended growth path
 
-The file-input and CLI layer now sits over the existing schemas and solver. Parsing and command behavior stay outside the calculation equations. Structured results serialize for downstream use. The next layer should add traceable equilibrium contributions without coupling them to the parser or presentation format.
+The file-input and CLI layer now sits over the existing schemas and solver. Parsing and command behavior stay outside the calculation equations. Structured results serialize for downstream use. The result trace records equilibrium equations and numeric substitutions independently from how the CLI displays them. Future solvers should retain this result/trace boundary.
 
 As new engineering methods are introduced, preserve these boundaries:
 

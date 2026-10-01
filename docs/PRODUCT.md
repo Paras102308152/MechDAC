@@ -35,7 +35,7 @@ structured physical inputs
 
 ## Current capability
 
-The current engine solves a limited 1D vertical beam statics problem. YAML or JSON inputs define beam length, one pin, one roller, point forces, uniform distributed forces, and applied moments. The CLI validates the input, runs the solver, and displays reactions and extrema as readable text or structured JSON. The solver calculates piecewise shear/bending-moment behavior, including critical absolute values and explicit sign conventions. See [DESIGN_NOTES.md](DESIGN_NOTES.md) for assumptions and limitations.
+The current engine solves a limited 1D vertical beam statics problem. YAML or JSON inputs define beam length, one pin, one roller, point forces, uniform distributed forces, and applied moments. The CLI validates the input, runs the solver, and displays reactions, an equilibrium calculation trace, and extrema as readable text or structured JSON. The solver calculates piecewise shear/bending-moment behavior, including critical absolute values and explicit sign conventions. See [DESIGN_NOTES.md](DESIGN_NOTES.md) for assumptions and limitations.
 
 There is not yet a plot, calculation trace, report generator, or CAD workflow. The current solver API is usable from Python and covered by analytical and CLI tests.
 

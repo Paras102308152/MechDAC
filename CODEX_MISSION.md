@@ -27,7 +27,7 @@ The current repository is the existing local project at `/Users/parasbadhran/Des
 
 ## Current scope
 
-The repository currently contains a deterministic, planar 1D beam statics solver for vertical point forces, uniform distributed forces, and applied couples on one pin and one roller. It returns reactions, shear and moment event values, polynomial diagram segments, extrema, assumptions, and solver metadata. A CLI reads YAML or JSON inputs and displays text or structured JSON results. This is the current engineering capability, not a full shaft designer.
+The repository currently contains a deterministic, planar 1D beam statics solver for vertical point forces, uniform distributed forces, and applied couples on one pin and one roller. It returns reactions, a numeric equilibrium trace, shear and moment event values, polynomial diagram segments, extrema, assumptions, and solver metadata. A CLI reads YAML or JSON inputs and displays text or structured JSON results. This is the current engineering capability, not a full shaft designer.
 
 The next product milestone is calculation transparency: record important equilibrium intermediates and make the load-to-result path easier to audit. See [STATUS.md](STATUS.md), [ROADMAP.md](ROADMAP.md), and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 

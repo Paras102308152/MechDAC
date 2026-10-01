@@ -7,6 +7,7 @@ from collections import defaultdict
 from mechdac.core.results import (
     BeamAnalysisResult,
     BendingMomentPoint,
+    CalculationTraceEntry,
     DiagramSegment,
     ShearForcePoint,
     SupportReaction,
@@ -29,34 +30,46 @@ def _signed_direction(magnitude: float, direction: str, positive: str) -> float:
     return magnitude if direction == positive else -magnitude
 
 
-def _solve_reactions(beam: BeamSpec) -> tuple[tuple[SupportReaction, ...], dict[float, float]]:
+def _solve_reactions(
+    beam: BeamSpec,
+) -> tuple[tuple[SupportReaction, ...], dict[float, float], tuple[CalculationTraceEntry, ...]]:
     supports = sorted(beam.supports, key=lambda support: support.position.to("m"))
     x_left, x_right = (support.position.to("m") for support in supports)
+    force_terms: list[str] = []
+    moment_terms: list[str] = []
+    total_force = 0.0
+    total_moment_about_left_support = 0.0
 
-    applied_forces: list[tuple[float, float]] = [
-        (
-            load.position.to("m"),
-            _signed_direction(load.magnitude.to("N"), load.direction, "up"),
-        )
-        for load in beam.point_loads
-    ]
+    for load in beam.point_loads:
+        position = load.position.to("m")
+        force = _signed_direction(load.magnitude.to("N"), load.direction, "up")
+        force_terms.append(f"({force:+g} N)")
+        moment_terms.append(f"({force:+g} N × ({position:g} m - {x_left:g} m))")
+        total_force += force
+        total_moment_about_left_support += force * (position - x_left)
+
     for load in beam.distributed_loads:
         start = load.start.to("m")
         end = load.end.to("m")
         intensity = _signed_direction(load.intensity.to("N/m"), load.direction, "up")
-        resultant = intensity * (end - start)
-        applied_forces.append((start + (end - start) / 2, resultant))
+        width = end - start
+        resultant = intensity * width
+        centroid = start + width / 2
+        force_terms.append(f"({intensity:+g} N/m × {width:g} m)")
+        moment_terms.append(
+            f"({intensity:+g} N/m × {width:g} m × ({centroid:g} m - {x_left:g} m))"
+        )
+        total_force += resultant
+        total_moment_about_left_support += resultant * (centroid - x_left)
 
-    total_force = sum(force for _, force in applied_forces)
-    total_moment_about_origin = sum(position * force for position, force in applied_forces)
-    total_moment_about_origin += sum(
-        _signed_direction(moment.magnitude.to("N*m"), moment.direction, "counterclockwise")
-        for moment in beam.applied_moments
-    )
+    for moment in beam.applied_moments:
+        couple = _signed_direction(moment.magnitude.to("N*m"), moment.direction, "counterclockwise")
+        moment_terms.append(f"({couple:+g} N·m)")
+        total_moment_about_left_support += couple
 
     support_span = x_right - x_left
-    left_reaction = (total_moment_about_origin - x_right * total_force) / support_span
-    right_reaction = (-total_moment_about_origin + x_left * total_force) / support_span
+    right_reaction = -total_moment_about_left_support / support_span
+    left_reaction = -total_force - right_reaction
     reaction_by_position = {x_left: left_reaction, x_right: right_reaction}
     reactions = tuple(
         SupportReaction(
@@ -66,7 +79,46 @@ def _solve_reactions(beam: BeamSpec) -> tuple[tuple[SupportReaction, ...], dict[
         )
         for support in supports
     )
-    return reactions, reaction_by_position
+    force_substitution = " + ".join(force_terms) or "0 N"
+    moment_substitution = " + ".join(moment_terms) or "0 N·m"
+    right_support = supports[1]
+    left_support = supports[0]
+    trace = (
+        CalculationTraceEntry(
+            name="External vertical resultant",
+            equation="F_ext = ΣF_point + Σ(q_i Δx_i)",
+            substitution=f"F_ext = {force_substitution} = {total_force:+g} N",
+            result=_q(total_force, "N"),
+        ),
+        CalculationTraceEntry(
+            name="External moment about support A",
+            equation="M_A = Σ[F_i(x_i - x_A)] + Σ[M_i]",
+            substitution=(
+                f"M_A = {moment_substitution} = "
+                f"{total_moment_about_left_support:+g} N·m"
+            ),
+            result=_q(total_moment_about_left_support, "N*m"),
+        ),
+        CalculationTraceEntry(
+            name=f"{right_support.kind} reaction",
+            equation="R_B = -M_A / (x_B - x_A)",
+            substitution=(
+                f"R_B = -({total_moment_about_left_support:+g} N·m) / "
+                f"({x_right:g} m - {x_left:g} m) = {right_reaction:+g} N"
+            ),
+            result=_q(right_reaction, "N"),
+        ),
+        CalculationTraceEntry(
+            name=f"{left_support.kind} reaction",
+            equation="R_A = -F_ext - R_B",
+            substitution=(
+                f"R_A = -({total_force:+g} N) - ({right_reaction:+g} N) "
+                f"= {left_reaction:+g} N"
+            ),
+            result=_q(left_reaction, "N"),
+        ),
+    )
+    return reactions, reaction_by_position, trace
 
 
 def solve_beam(beam: BeamSpec) -> BeamAnalysisResult:
@@ -77,7 +129,7 @@ def solve_beam(beam: BeamSpec) -> BeamAnalysisResult:
     Distributed-load intensity uses the same upward-positive sign convention.
     """
 
-    reactions, reaction_by_position = _solve_reactions(beam)
+    reactions, reaction_by_position, calculation_trace = _solve_reactions(beam)
     length = beam.length.to("m")
 
     event_positions = {0.0, length, *reaction_by_position}
@@ -177,6 +229,7 @@ def solve_beam(beam: BeamSpec) -> BeamAnalysisResult:
         shear_force_points=tuple(shear_points),
         bending_moment_points=tuple(moment_points),
         diagram_segments=tuple(segments),
+        calculation_trace=calculation_trace,
         maximum_absolute_shear=_q(abs(maximum_shear[1]), "N"),
         maximum_absolute_bending_moment=_q(abs(maximum_moment[1]), "N*m"),
         maximum_bending_moment_position=_q(maximum_moment[0], "m"),

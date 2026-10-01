@@ -48,6 +48,10 @@ point_loads:
     assert "Maximum |V|: 1000 N" in output.out
     assert "Maximum |M|: 2000 N·m at 2 m" in output.out
     assert "upward is positive" in output.out
+    assert output.out.count("Assumptions:") == 1
+    assert "Calculation trace:" in output.out
+    assert "R_B = -M_A / (x_B - x_A)" in output.out
+    assert "F_ext = (-2000 N) = -2000 N" in output.out
     assert output.err == ""
 
 
@@ -63,6 +67,7 @@ def test_cli_accepts_json_and_emits_structured_result(tmp_path, capsys) -> None:
     assert result["support_reactions"][0]["force"] == {"value": 1000.0, "unit": "N"}
     assert result["maximum_absolute_bending_moment"] == {"value": 2000.0, "unit": "N*m"}
     assert result["maximum_bending_moment_position"] == {"value": 2.0, "unit": "m"}
+    assert len(result["calculation_trace"]) == 4
     assert output.err == ""
 
 

@@ -70,10 +70,19 @@ def _format_text(result: BeamAnalysisResult) -> str:
             "  Maximum |M|: "
             f"{result.maximum_absolute_bending_moment.to('N*m'):g} N·m at "
             f"{result.maximum_bending_moment_position.to('m'):g} m",
-            "",
-            "Assumptions:",
         )
     )
+    lines.append("Calculation trace:")
+    for step in result.calculation_trace:
+        lines.extend(
+            (
+                f"  {step.name}:",
+                f"    {step.equation}",
+                f"    {step.substitution}",
+            )
+        )
+    lines.append("")
+    lines.append("Assumptions:")
     lines.extend(f"  - {assumption}" for assumption in result.assumptions)
     lines.append("Warnings:")
     if result.warnings:
