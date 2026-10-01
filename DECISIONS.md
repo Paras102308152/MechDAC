@@ -39,3 +39,13 @@
 **Alternatives considered:** Return only a dense sampled array; return only reactions and let each plotting feature recompute diagrams.
 
 **Consequences:** Results contain canonical-unit coefficients and enough data to evaluate each interval. Plot rendering itself remains deferred.
+
+## 2026-10-01 — Keep file parsing and presentation in a small CLI layer
+
+**Decision:** Provide `mechdac beam solve INPUT`, accept JSON with the standard library and YAML with PyYAML safe loading, and support readable text plus `--format json` output. The CLI validates through `BeamSpec` and calls the existing solver.
+
+**Reason:** This completes a usable workflow without moving engineering calculations into command code or adding a web/UI framework.
+
+**Alternatives considered:** Require Python callers only; use a different command structure; add a report or plotting dependency as part of the first CLI.
+
+**Consequences:** PyYAML is the only new runtime dependency. Parsing, validation, solving, and display have separate boundaries. CLI output does not yet show a step-by-step calculation trace or plot.

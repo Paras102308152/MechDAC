@@ -27,9 +27,9 @@ The current repository is the existing local project at `/Users/parasbadhran/Des
 
 ## Current scope
 
-The repository currently contains a deterministic, planar 1D beam statics solver for vertical point forces, uniform distributed forces, and applied couples on one pin and one roller. It returns reactions, shear and moment event values, polynomial diagram segments, extrema, assumptions, and solver metadata. This is the current engineering capability, not a full shaft designer.
+The repository currently contains a deterministic, planar 1D beam statics solver for vertical point forces, uniform distributed forces, and applied couples on one pin and one roller. It returns reactions, shear and moment event values, polynomial diagram segments, extrema, assumptions, and solver metadata. A CLI reads YAML or JSON inputs and displays text or structured JSON results. This is the current engineering capability, not a full shaft designer.
 
-The next product milestone is a user-runnable YAML/JSON-to-results workflow with a CLI and useful errors. See [STATUS.md](STATUS.md), [ROADMAP.md](ROADMAP.md), and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+The next product milestone is calculation transparency: record important equilibrium intermediates and make the load-to-result path easier to audit. See [STATUS.md](STATUS.md), [ROADMAP.md](ROADMAP.md), and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Working rules for future development
 
@@ -48,9 +48,11 @@ The next product milestone is a user-runnable YAML/JSON-to-results workflow with
 ```bash
 python3.12 -m venv .venv
 . .venv/bin/activate
-python -m pip install -e '.[dev]'
+python -m pip install '.[dev]'
 python -m pytest -q
 python -c 'from mechdac.solvers.beam import solve_beam; print("beam solver import OK")'
+mechdac beam solve examples/simple_beam.yaml
+mechdac beam solve examples/simple_beam.yaml --format json
 ```
 
-The CLI and public example workflow are not implemented yet. Do not imply that `mechdac beam solve ...` currently works.
+For source-tree development after changing package code, reinstall with `python -m pip install '.[dev]'` before exercising the installed CLI entry point.

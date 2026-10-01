@@ -1,0 +1,21 @@
+# Simply supported beam with a central downward point force.
+length:
+  value: 4
+  unit: m
+supports:
+  - kind: pin
+    position:
+      value: 0
+      unit: m
+  - kind: roller
+    position:
+      value: 4
+      unit: m
+point_loads:
+  - position:
+      value: 2
+      unit: m
+    magnitude:
+      value: 2000
+      unit: N
+    direction: down

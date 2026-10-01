@@ -36,6 +36,8 @@ The solver searches event-side values and interval endpoints for peak shear/mome
 
 `QuantityValue` serializes as a finite scalar and a Pint unit expression. Schemas validate dimensional compatibility; the solver converts to canonical SI values before arithmetic. Pydantic JSON methods can serialize the beam input and structured result. Unknown schema fields are rejected.
 
+The CLI accepts a mapping at the document root, with beam fields matching `BeamSpec`. `.json` files use Python's standard JSON parser; `.yaml` and `.yml` use PyYAML's safe loader. CLI errors return exit code 2 and go to stderr. Default text output is for terminal reading; `--format json` writes the complete structured solver result to stdout.
+
 ## Not implemented
 
 There is no varying distributed-load function, calculation trace showing individual load contributions, plot renderer, YAML/JSON loader, CLI, beam deflection, axial force, gear force, bearing behavior, shaft torsion/stress, standards rating, CAD, optimization, or reporting. These are future decisions, not implicit behavior of the current solver.

@@ -4,7 +4,7 @@ Roadmap status reflects code that exists and has been verified, not planned arch
 
 ## Phase 0 — Understand and document
 
-**Complete.** Repository structure and current implementation have been inspected; project memory documents are being established.
+**Complete.** Repository structure and current implementation have been inspected; persistent project memory is established in the root and `docs/` files.
 
 ## Phase 1 — Repository and domain foundation
 
@@ -16,11 +16,11 @@ Roadmap status reflects code that exists and has been verified, not planned arch
 
 ## Phase 3 — First end-to-end workflow
 
-**Next.** Build a narrow workflow that accepts a documented YAML or JSON beam input, validates it, runs the solver, and prints a useful summary with structured result serialization. Add a CLI entry point, actionable errors, and a generic textbook-style example. Verify parsing and displayed numerical results with tests.
+**Complete.** `mechdac beam solve INPUT` accepts YAML/YML and JSON; Pydantic validates the physical schema, the deterministic solver runs, and output is readable text or structured JSON. The CLI has actionable input errors, tests, a generic example, and README instructions.
 
 ## Phase 4 — Calculation transparency
 
-Add auditable input/assumption provenance and calculation trace details if they improve inspection of the beam results. Plot SFD/BMD only after the result model can supply plotting without repeating physics.
+**In progress.** Add auditable load resultants and support-reaction equilibrium substitutions to the structured result and CLI. Then assess a small SFD/BMD plotting option; plotted values should come from returned diagram segments and must not recalculate statics.
 
 ## Phase 5 — Shaft design
 

@@ -10,7 +10,11 @@ requires-python = ">=3.12"
 dependencies = [
     "pydantic>=2.7,<3",
     "Pint>=0.24,<1",
+    "PyYAML>=6.0,<7",
 ]
+
+[project.scripts]
+mechdac = "mechdac.cli:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
