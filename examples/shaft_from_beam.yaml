@@ -1,0 +1,19 @@
+# One vertical beam plane supplies bending; torque is specified at the
+# section with maximum absolute bending moment. This is not an ASME rating.
+beam:
+  length: {value: 4, unit: m}
+  supports:
+    - kind: pin
+      position: {value: 0, unit: m}
+    - kind: roller
+      position: {value: 4, unit: m}
+  point_loads:
+    - position: {value: 2, unit: m}
+      magnitude: {value: 2000, unit: N}
+      direction: down
+torque_at_critical_section: {value: 100, unit: N*m}
+material:
+  name: generic steel
+  yield_strength: {value: 250, unit: MPa}
+design_requirement:
+  minimum_factor_of_safety: 2

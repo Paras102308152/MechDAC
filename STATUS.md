@@ -2,47 +2,44 @@
 
 ## Current phase
 
-Phase 4 — calculation transparency is complete. The Phase 3 CLI workflow and an auditable load-resultant/support-reaction trace are implemented and verified. Phase 5 shaft design is next.
+Phase 5 — the initial static beam/shaft workflow is complete for one vertical bending plane and one selected shaft section. Standalone shaft loading is supported, and the composed route uses the beam's reported maximum absolute bending moment with torque supplied at that same section.
 
 ## Completed
 
-- Git repository initialized on `main`, with `origin` set to `https://github.com/Paras102308152/MechDAC`.
+- Git repository is on `main`, with `origin` set to `https://github.com/Paras102308152/MechDAC`.
 - Python package metadata targets Python 3.12+ and declares Pydantic v2 and Pint; pytest is a development dependency.
-- `QuantityValue` pairs finite values with Pint units. Pydantic domain models reject unknown fields and validate assignments.
-- Beam schemas support a length, exactly one pin and one roller, point forces, uniform distributed forces, and applied couples. Units, directions, load magnitudes, and positions are validated.
-- Determinate vertical reactions, shear behavior, and sagging-positive bending moment behavior are calculated by `src/mechdac/solvers/beam.py`.
-- Results include signed support reactions; left/right shear and moment values at event positions; piecewise diagram coefficients; maximum absolute shear and bending moment; critical moment location; assumptions; warnings field; solver name and version.
-- Analytical tests cover central and off-center point loads, a full-span UDL, an applied couple, mixed units, JSON input round-trip, unknown fields/units, incompatible dimensions, and invalid supports/load ranges.
-- The package has been installed into the local `.venv`, and the solver imports successfully.
-- `mechdac beam solve INPUT` accepts YAML, YML, and JSON files; it prints readable text by default and the complete Pydantic result with `--format json`.
-- `examples/simple_beam.yaml` is a generic runnable case, and `README.md` documents installation, use, sign conventions, and solver limits.
-- CLI tests cover YAML and JSON input, text and structured output, schema failures, malformed YAML, missing files, unknown suffixes, and invalid document roots.
-- Results include four calculation trace entries: external vertical resultant, external moment about the left support, right reaction, and left reaction. Each carries equation text, numeric substitution, and a unit-bearing result.
-- The CLI text view prints the trace; JSON output includes it alongside diagram event values and piecewise segment coefficients.
+- `QuantityValue` stores finite scalars plus Pint-compatible unit strings. Pydantic domain models reject unknown fields and validate assignment.
+- Beam schemas support one pin and one roller, point forces, uniform distributed forces, and applied couples, with dimensional and position validation.
+- The beam solver calculates determinate vertical reactions, shear behavior, sagging-positive bending moments, exact diagram segments, extrema, and an auditable equilibrium trace.
+- `mechdac beam solve INPUT` accepts YAML/YML/JSON and emits text or structured JSON. `examples/simple_beam.yaml` is generic and runnable.
+- `MaterialSpec`, `DesignRequirementSpec`, `ShaftLoadingSpec`, and `BeamShaftLoadingSpec` validate material yield strength, positive finite target factor of safety, moment units, and nested beam data.
+- `solve_shaft` sizes a solid circular section for static bending and torsion using nominal elastic stresses and the generic von Mises yield criterion. Its structured result includes diameter, stresses, actual/required factors of safety, assumptions, solver metadata, and five trace entries. It is not an ASME rating.
+- `solve_shaft_from_beam` uses the beam's maximum absolute bending moment and reported position, combines it with torque explicitly supplied at that section, and preserves both full results.
+- `mechdac shaft size INPUT` and `mechdac shaft size-from-beam INPUT` accept YAML/YML/JSON and emit text or structured JSON. `examples/shaft_basic.yaml` and `examples/shaft_from_beam.yaml` are generic runnable inputs.
+- Tests cover unit conversion, invalid physical values, unknown fields, serialization round-trips, analytical beam and shaft cases, combined beam/shaft results, and CLI input/output and error paths. The formerly empty unit/schema tests and shaft example are populated.
 
-## In progress
+## In progress / deferred
 
-- Plotting is deferred: exact piecewise diagram data is available in JSON, and the first CLI does not need a plotting dependency.
-- Phase 1 is only complete to the extent needed by the beam slice. Generic material, design requirement, shaft loading, gear, bearing, load-case, and general solver/check result models are not implemented.
+- Plotting is deferred. Beam JSON already includes exact piecewise diagram data; no plotting dependency is currently needed by the calculation workflows.
+- Broader Phase 1 models (gear pair, bearing load, load case, and reusable check/solver result models) remain unimplemented until a concrete workflow requires them.
 
 ## Next
 
-- Begin Phase 5 with a narrowly scoped solid-round-shaft static bending/torsion screen. Define its physical inputs and material/design requirement fields separately from solver equations; identify the generic failure criterion and avoid presenting it as ASME or another standard rating.
+- Evaluate an SFD/BMD plotting path using the existing exact diagram results. Keep plotting separate from calculation code and add a dependency only if the implementation needs it.
 
-## Known problems
+## Known limitations
 
-- `examples/shaft_basic.yaml`, `src/mechdac/solvers/shafts.py`, `tests/test_units.py`, and `tests/test_shaft_schema.py` remain empty. There is no shaft solver/example yet.
-- The current solver is limited to planar vertical statics, one pin and one roller, point forces, uniform distributed loads, and applied couples. It does not calculate axial effects, deflection, stresses, fatigue, or shaft diameter.
-- There is no SFD/BMD plot renderer or report generator. Exact diagram event values and interval coefficients are available for downstream use.
-- The result currently provides one critical absolute-moment location; tied maxima may occur at multiple locations.
+- The beam solver is planar and static, with one pin and one roller, point forces, uniform distributed loads, and applied couples. It does not calculate axial effects, deflection, or stresses.
+- The shaft solver assumes a solid circular section, one critical section, static bending and torsion only, nominal stresses, and a generic von Mises yield screen. It omits stress concentrations, fatigue, axial load, deflection, and standard diameter selection.
+- The composed workflow uses one bending plane and one beam-reported maximum-moment location. Torque must be supplied for that location. Tied maxima, torque elsewhere, and multiple bending planes are not evaluated.
+- There is no SFD/BMD plot renderer or report generator. The beam result reports one critical absolute-moment location; tied maxima may occur at multiple locations.
 
 ## Last verification
 
-- Date: 2026-10-01.
-- Environment: Python 3.12.14, Pydantic 2.13.5, Pint 0.26.1, PyYAML 6.0.3, pytest 9.1.1.
-- Tests: `.venv/bin/python -m pytest -q` — 22 passed in 0.32s after a standard package install; source-tree verification also passed (22 passed in 0.37s).
-- Package: `.venv/bin/python -c 'import mechdac; from mechdac.solvers.beam import solve_beam'` — passed.
-- Build/install: `.venv/bin/python -m pip install '.[dev]'` — wheel built and installed successfully.
-- CLI text and trace: `.venv/bin/mechdac beam solve examples/simple_beam.yaml` — passed; central 2000 N load on a 4 m simply-supported beam returned 1000 N reactions and 2000 N·m maximum moment at 2 m.
-- CLI JSON: `.venv/bin/mechdac beam solve examples/simple_beam.yaml --format json` — passed and parsed as JSON, including trace and diagram data.
-- Runnable setup and test commands are in `CODEX_MISSION.md` and `README.md`.
+- Date: 2026-10-01. Environment: Python 3.12.14, Pydantic 2.13.5, Pint 0.26.1, PyYAML 6.0.3, pytest 9.1.1.
+- Full suite: `.venv/bin/python -m pytest -q` — **43 passed in 0.39s** after reinstalling the built package. Source-tree run also passed: 43 passed in 0.89s.
+- Package: `.venv/bin/python -m pip install '.[dev]'` — wheel built and installed successfully.
+- Import: `import mechdac`; imports of `solve_beam`, `solve_shaft`, and `solve_shaft_from_beam` — passed.
+- Beam and standalone shaft CLI examples — passed in text mode.
+- Beam and beam-to-shaft CLI JSON outputs — parsed successfully; composed output identified the 2 m section and retained the nested shaft result.
+- `git diff HEAD --check` — passed on the final checkpoint changes.

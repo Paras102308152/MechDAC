@@ -20,6 +20,41 @@ def _require_dimension(quantity: QuantityValue, unit: str, field: str) -> float:
         raise ValueError(f"{field} must have units compatible with {unit}") from exc
 
 
+class MaterialSpec(DomainModel):
+    """Material property input for a static strength assessment."""
+
+    name: str = Field(min_length=1)
+    yield_strength: QuantityValue
+
+    @model_validator(mode="after")
+    def yield_strength_is_positive_stress(self) -> MaterialSpec:
+        strength = _require_dimension(self.yield_strength, "Pa", "yield strength")
+        if strength <= 0:
+            raise ValueError("yield strength must be positive")
+        return self
+
+
+class DesignRequirementSpec(DomainModel):
+    """A requested minimum dimensionless factor of safety."""
+
+    minimum_factor_of_safety: float = Field(gt=0, allow_inf_nan=False)
+
+
+class ShaftLoadingSpec(DomainModel):
+    """Signed bending moment and torque at one shaft section, plus design inputs."""
+
+    bending_moment: QuantityValue
+    torque: QuantityValue
+    material: MaterialSpec
+    design_requirement: DesignRequirementSpec
+
+    @model_validator(mode="after")
+    def loads_are_moments(self) -> ShaftLoadingSpec:
+        _require_dimension(self.bending_moment, "N*m", "bending moment")
+        _require_dimension(self.torque, "N*m", "torque")
+        return self
+
+
 class SupportSpec(DomainModel):
     """An ideal vertical support located along the beam axis."""
 
@@ -117,4 +152,22 @@ class BeamSpec(DomainModel):
         for load in self.distributed_loads:
             if load.start.to("m") < 0 or load.end.to("m") > length:
                 raise ValueError("distributed loads must be within the beam")
+        return self
+
+
+class BeamShaftLoadingSpec(DomainModel):
+    """Beam loads plus torque and material data for one selected shaft section."""
+
+    beam: BeamSpec
+    torque_at_critical_section: QuantityValue
+    material: MaterialSpec
+    design_requirement: DesignRequirementSpec
+
+    @model_validator(mode="after")
+    def torque_is_moment(self) -> BeamShaftLoadingSpec:
+        _require_dimension(
+            self.torque_at_critical_section,
+            "N*m",
+            "torque at critical section",
+        )
         return self

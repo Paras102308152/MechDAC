@@ -70,3 +70,32 @@ class BeamAnalysisResult(DomainModel):
     assumptions: tuple[str, ...] = ()
     solver_name: Literal["mechdac.beam_statics"] = "mechdac.beam_statics"
     solver_version: str = "0.1.0"
+
+
+class ShaftDesignResult(DomainModel):
+    """Static solid-shaft yield sizing result under bending and torsion."""
+
+    minimum_required_diameter: QuantityValue
+    bending_stress: QuantityValue
+    torsional_shear_stress: QuantityValue
+    equivalent_stress: QuantityValue
+    yield_strength: QuantityValue
+    minimum_factor_of_safety: float
+    factor_of_safety: float
+    calculation_trace: tuple[CalculationTraceEntry, ...]
+    warnings: tuple[str, ...] = ()
+    assumptions: tuple[str, ...] = ()
+    solver_name: Literal["mechdac.static_solid_shaft_yield"] = "mechdac.static_solid_shaft_yield"
+    solver_version: str = "0.1.0"
+
+
+class BeamShaftDesignResult(DomainModel):
+    """Beam solution and static shaft sizing at its maximum-moment section."""
+
+    beam_analysis: BeamAnalysisResult
+    shaft_design: ShaftDesignResult
+    critical_section_position: QuantityValue
+    critical_bending_moment: QuantityValue
+    assumptions: tuple[str, ...] = ()
+    solver_name: Literal["mechdac.beam_shaft_static"] = "mechdac.beam_shaft_static"
+    solver_version: str = "0.1.0"

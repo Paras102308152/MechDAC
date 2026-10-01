@@ -59,3 +59,23 @@
 **Alternatives considered:** Return only final reactions; emit unstructured log text from the solver; introduce a symbolic algebra dependency.
 
 **Consequences:** Trace entries have an equation, numeric substitution, and unit-bearing result. Piecewise diagram coefficients expose the remaining shear/moment behavior. This is a numerical trace, not a symbolic equation engine or standards-compliance report.
+
+## 2026-10-01 — Keep initial shaft yield sizing standalone and generic
+
+**Decision:** Add a separate one-section solid circular shaft solver taking bending moment, torque, yield strength, and a minimum static factor of safety. Use nominal elastic bending/torsion stresses and the von Mises distortion-energy criterion to solve for minimum diameter. Keep these equations in `solvers/shafts.py`; Pydantic schemas contain only physical and design inputs.
+
+**Reason:** This creates a useful, testable static shaft capability without implying a complete shaft-system designer or a standard-specific rating. Explicit moments avoid guessing how beam bending planes or torque distributions map to a rotating shaft.
+
+**Alternatives considered:** Embed equations in schemas; label the method as an ASME shaft design; infer shaft loads from beam output before a section mapping is defined.
+
+**Consequences:** CLI inputs provide moments at one critical section. The result trace shows sizing and stress substitutions. This generic static screen omits fatigue, stress concentrations, axial loading, deflection, and standard diameters. Beam-to-shaft composition is a separate input and result path.
+
+## 2026-10-01 — Compose one-plane beam bending with explicit section torque
+
+**Decision:** Add a separate input for a beam plus torque specified at the beam solver's reported maximum-absolute-moment section. Return both full solver results and the selected location. Keep the standalone shaft-loading workflow available.
+
+**Reason:** This creates an end-to-end beam-to-shaft statics path without inferring torque distribution, bending in another plane, or shaft geometry from a one-plane beam model.
+
+**Alternatives considered:** Automatically infer shaft torque; combine beam moments from multiple planes without a physical model; silently select a section and omit the beam result from outputs.
+
+**Consequences:** The composition reports that torque is taken at the selected beam section. Only one reported maximum section is sized; tied peaks, other sections, and multiple bending planes are not evaluated. Both component results remain available in structured output.

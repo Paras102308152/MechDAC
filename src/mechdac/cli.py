@@ -11,16 +11,17 @@ from typing import Sequence
 import yaml
 from pydantic import ValidationError
 
-from mechdac.core.results import BeamAnalysisResult
-from mechdac.core.schema import BeamSpec
+from mechdac.core.results import BeamAnalysisResult, BeamShaftDesignResult, ShaftDesignResult
+from mechdac.core.schema import BeamShaftLoadingSpec, BeamSpec, ShaftLoadingSpec
 from mechdac.solvers.beam import solve_beam
+from mechdac.solvers.shafts import solve_shaft, solve_shaft_from_beam
 
 
 class InputFileError(Exception):
     """An input file could not be read, parsed, or validated."""
 
 
-def _load_beam(path: Path) -> BeamSpec:
+def _load_document(path: Path) -> dict[str, object]:
     suffix = path.suffix.lower()
     if suffix not in {".yaml", ".yml", ".json"}:
         raise InputFileError("Input extension must be .yaml, .yml, or .json")
@@ -43,10 +44,28 @@ def _load_beam(path: Path) -> BeamSpec:
 
     if not isinstance(document, dict):
         raise InputFileError("Input document root must be a mapping/object")
+    return document
+
+
+def _load_beam(path: Path) -> BeamSpec:
     try:
-        return BeamSpec.model_validate(document)
+        return BeamSpec.model_validate(_load_document(path))
     except ValidationError as exc:
         raise InputFileError(f"Invalid beam input:\n{exc}") from exc
+
+
+def _load_shaft(path: Path) -> ShaftLoadingSpec:
+    try:
+        return ShaftLoadingSpec.model_validate(_load_document(path))
+    except ValidationError as exc:
+        raise InputFileError(f"Invalid shaft input:\n{exc}") from exc
+
+
+def _load_beam_shaft(path: Path) -> BeamShaftLoadingSpec:
+    try:
+        return BeamShaftLoadingSpec.model_validate(_load_document(path))
+    except ValidationError as exc:
+        raise InputFileError(f"Invalid beam-to-shaft input:\n{exc}") from exc
 
 
 def _format_text(result: BeamAnalysisResult) -> str:
@@ -92,6 +111,48 @@ def _format_text(result: BeamAnalysisResult) -> str:
     return "\n".join(lines)
 
 
+def _format_shaft_text(result: ShaftDesignResult) -> str:
+    lines = [
+        "Static solid-round shaft result",
+        f"Solver: {result.solver_name} {result.solver_version}",
+        f"Minimum required diameter: {result.minimum_required_diameter.to('mm'):g} mm",
+        f"Nominal bending stress: {result.bending_stress.to('MPa'):g} MPa",
+        f"Nominal torsional shear stress: {result.torsional_shear_stress.to('MPa'):g} MPa",
+        f"Equivalent von Mises stress: {result.equivalent_stress.to('MPa'):g} MPa",
+        f"Yield strength: {result.yield_strength.to('MPa'):g} MPa",
+        f"Yield factor of safety: {result.factor_of_safety:g} "
+        f"(minimum requested: {result.minimum_factor_of_safety:g})",
+        "Calculation trace:",
+    ]
+    for step in result.calculation_trace:
+        lines.extend((f"  {step.name}:", f"    {step.equation}", f"    {step.substitution}"))
+    lines.append("")
+    lines.append("Assumptions:")
+    lines.extend(f"  - {assumption}" for assumption in result.assumptions)
+    lines.append("Warnings:")
+    if result.warnings:
+        lines.extend(f"  - {warning}" for warning in result.warnings)
+    else:
+        lines.append("  - none")
+    return "\n".join(lines)
+
+
+def _format_beam_shaft_text(result: BeamShaftDesignResult) -> str:
+    lines = [
+        "Beam-to-shaft static sizing result",
+        f"Critical section: {result.critical_section_position.to('m'):g} m",
+        f"Bending moment used: {result.critical_bending_moment.to('N*m'):g} N·m",
+        "",
+        _format_text(result.beam_analysis),
+        "",
+        _format_shaft_text(result.shaft_design),
+        "",
+        "Composition assumptions:",
+    ]
+    lines.extend(f"  - {assumption}" for assumption in result.assumptions)
+    return "\n".join(lines)
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="mechdac", description="Mechanical design calculations")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -105,6 +166,30 @@ def _build_parser() -> argparse.ArgumentParser:
         default="text",
         help="output format (default: text)",
     )
+    shaft_parser = commands.add_parser("shaft", help="shaft design calculations")
+    shaft_commands = shaft_parser.add_subparsers(dest="shaft_command", required=True)
+    size_parser = shaft_commands.add_parser(
+        "size", help="size a solid round shaft for static bending and torsion"
+    )
+    size_parser.add_argument("input", type=Path, help="shaft input file (.yaml, .yml, or .json)")
+    size_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format (default: text)",
+    )
+    from_beam_parser = shaft_commands.add_parser(
+        "size-from-beam", help="size a shaft using a beam result's maximum bending moment"
+    )
+    from_beam_parser.add_argument(
+        "input", type=Path, help="combined beam/shaft input file (.yaml, .yml, or .json)"
+    )
+    from_beam_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format (default: text)",
+    )
     return parser
 
 
@@ -113,14 +198,32 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     args = _build_parser().parse_args(argv)
     try:
-        beam = _load_beam(args.input)
+        if args.command == "beam":
+            result = solve_beam(_load_beam(args.input))
+        elif args.shaft_command == "size":
+            shaft = _load_shaft(args.input)
+            try:
+                result = solve_shaft(shaft)
+            except ValueError as exc:
+                print(f"mechdac: error: invalid shaft sizing request: {exc}", file=sys.stderr)
+                return 2
+        else:
+            beam_shaft = _load_beam_shaft(args.input)
+            try:
+                result = solve_shaft_from_beam(beam_shaft)
+            except ValueError as exc:
+                print(f"mechdac: error: invalid beam-to-shaft sizing request: {exc}", file=sys.stderr)
+                return 2
     except InputFileError as exc:
         print(f"mechdac: error: {exc}", file=sys.stderr)
         return 2
 
-    result = solve_beam(beam)
     if args.format == "json":
         print(result.model_dump_json(indent=2))
+    elif isinstance(result, BeamShaftDesignResult):
+        print(_format_beam_shaft_text(result))
+    elif isinstance(result, ShaftDesignResult):
+        print(_format_shaft_text(result))
     else:
         print(_format_text(result))
     return 0

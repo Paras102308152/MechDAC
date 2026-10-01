@@ -24,7 +24,7 @@ Roadmap status reflects code that exists and has been verified, not planned arch
 
 ## Phase 5 — Shaft design
 
-**Next.** Begin with a clearly scoped solid-round-shaft static bending/torsion screen, separate material/design inputs from equations, document the chosen generic yield criterion, and verify against analytical cases. Do not represent a generic criterion as ASME/AGMA/ISO compliance. Defer fatigue, stress concentrations, standard-diameter tables, and broader shaft-system coupling until justified.
+**Complete for the initial static scope.** The standalone solid-round-shaft screen and a composed beam-to-shaft path use separated physical inputs, a generic von Mises yield criterion, traceable results, YAML/JSON CLI input, and analytical tests. The composed path uses the beam's single-plane maximum absolute moment and requires torque at that reported section. This is not an ASME/AGMA/ISO rating. Defer fatigue, stress concentrations, multiple bending planes, variable torque, standard-diameter tables, and broader shaft-system features until justified.
 
 ## Phase 6 — Additional mechanical primitives
 
@@ -36,7 +36,7 @@ Evaluate a CAD dependency only after calculation models are stable. Any geometry
 
 ## Phase 8 — Reporting
 
-Consider calculation reports, plots, assumptions, and BOM output after traceable calculations and stable structured results exist.
+Consider SFD/BMD plots from the existing exact diagram data, followed by calculation reports and BOM output, after traceable calculations and stable structured results exist.
 
 ## Phase 9 — Polish and release readiness
 
@@ -44,7 +44,7 @@ Improve documentation, examples, public API, CLI UX, error handling, packaging, 
 
 ## Deferred
 
-- Gear/bearing/shaft calculations and standards equations
-- Fatigue, stress, shaft sizing, and safety-factor checks
+- Gear/bearing calculations and standards equations
+- Fatigue, stress concentrations, multiple bending planes, variable torque, standard shaft diameters, and multi-section shaft analysis
 - CAD, optimization, report/PDF generation, and AI functionality
 - Web services, databases, GUI frameworks, and complex plugin systems

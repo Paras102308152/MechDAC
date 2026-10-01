@@ -10,15 +10,30 @@ BeamSpec and load/support schemas
 solve_beam (deterministic statics equations)
         ▼
 BeamAnalysisResult (reactions, diagram points/segments, extrema, assumptions)
+
+ShaftLoadingSpec + material/design inputs
+        │
+        ▼
+solve_shaft (generic static solid-round bending/torsion yield sizing)
+        ▼
+ShaftDesignResult (diameter, nominal stresses, factor of safety, trace)
+
+BeamShaftLoadingSpec (beam + torque at selected section + material/design inputs)
+        │
+        ├── solve_beam → maximum absolute bending moment and location
+        └── solve_shaft → static section sizing at that location
+        ▼
+BeamShaftDesignResult (both source and derived results)
 ```
 
 The current modules are:
 
 - `mechdac.core.units`: `QuantityValue`, one Pint registry, and common Pydantic configuration (`extra="forbid"`, assignment validation).
-- `mechdac.core.schema`: physical beam, support, point-load, distributed-load, and applied-moment inputs. It validates unit dimensions, directions, positive magnitudes, support count/type, and beam bounds. It contains no engineering equations.
+- `mechdac.core.schema`: physical beam, support, point-load, distributed-load, applied-moment, material, design requirement, and shaft-load inputs. The composed beam/shaft input makes torque-at-selected-section explicit. It validates units and physical bounds; it contains no engineering equations.
 - `mechdac.solvers.beam`: equilibrium reactions plus piecewise shear and bending moment calculations. It owns the sign conventions used by this solver.
-- `mechdac.core.results`: Pydantic output models with reactions, left/right event values, polynomial segment coefficients, extrema, calculation trace, assumptions, warnings, and solver metadata.
-- `mechdac.cli`: argparse-based `mechdac beam solve` command. It reads JSON with the standard library and YAML with `yaml.safe_load`, validates with `BeamSpec`, then calls the same solver API. Text is the default output; `--format json` serializes the complete Pydantic result.
+- `mechdac.solvers.shafts`: generic static solid-round-shaft sizing from bending moment, torque, yield strength, and requested factor of safety. Its composition entry point solves the beam, selects its reported maximum absolute moment, and passes that plus the explicitly supplied section torque to the shaft solver. It does not claim a standard-specific rating.
+- `mechdac.core.results`: Pydantic output models with beam reactions, diagram data, shaft diameter and stresses, both nested results for the composed workflow, calculation traces, assumptions, warnings, and solver metadata.
+- `mechdac.cli`: argparse-based `mechdac beam solve`, `mechdac shaft size`, and `mechdac shaft size-from-beam` commands. It reads JSON with the standard library and YAML with `yaml.safe_load`, validates through the relevant schema, then calls the solver API. Text is the default output; `--format json` serializes the complete result.
 
 Packaging uses a `src/` layout. Pydantic v2 and Pint are runtime dependencies; pytest is a development extra. The supported Python version is 3.12 or later.
 
@@ -26,11 +41,11 @@ Packaging uses a `src/` layout. Pydantic v2 and Pint are runtime dependencies; p
 
 Schemas hold physical values with units and explicit directions. At the solver boundary, lengths convert to metres, forces to newtons, line loads to newtons per metre, and couples to newton-metres. The deterministic solver then applies static equilibrium and integrates the piecewise shear/moment behavior. Result models hold canonical units and plotting-relevant event/segment information.
 
-The first model is determinate by construction: exactly two distinct supports, one pin and one roller, with only vertical forces and couples. Pin/roller behavior is represented at the vertical-beam level; axial support reactions are out of scope.
+The beam model is determinate by construction: exactly two distinct supports, one pin and one roller, with only vertical forces and couples. Pin/roller behavior is represented at the vertical-beam level; axial support reactions are out of scope. The standalone shaft model accepts a supplied single-section bending moment and torque. The composed workflow uses the beam's maximum absolute bending moment and its reported position, then applies the torque supplied for that section. It models one bending plane and one selected section; tied moment maxima or varying torque elsewhere are not examined. Both shaft paths assume a solid circular section and a static von Mises yield criterion.
 
 ## Intended growth path
 
-The file-input and CLI layer now sits over the existing schemas and solver. Parsing and command behavior stay outside the calculation equations. Structured results serialize for downstream use. The result trace records equilibrium equations and numeric substitutions independently from how the CLI displays them. Future solvers should retain this result/trace boundary.
+The file-input and CLI layer sits over the schemas and solvers. Parsing and command behavior stay outside the calculation equations. Structured results serialize for downstream use. The beam trace records equilibrium equations and numeric substitutions; the shaft trace records its sizing and stress equations. The composed result preserves each complete result and the selected section location. Future solvers should retain this result/trace boundary.
 
 As new engineering methods are introduced, preserve these boundaries:
 
@@ -39,4 +54,4 @@ physical problem schemas → units → engineering solver(s)
 → structured results/checks → CLI/reporting → eventually CAD
 ```
 
-Standards-specific equations belong in explicitly named solver methods, not physical input schemas. There is no CLI, reporting module, CAD layer, or general material/gear/bearing schema implemented now; do not create empty placeholders for them.
+Standards-specific equations belong in explicitly named solver methods, not physical input schemas. The beam and shaft workflows have CLI input and output. There is no gear/bearing calculation, report generator, CAD layer, or general-purpose verification framework yet; add these only with a concrete, testable use.

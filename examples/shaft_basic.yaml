@@ -1,0 +1,8 @@
+# Generic static solid-round shaft screen; this is not an ASME rating.
+bending_moment: {value: 100, unit: N*m}
+torque: {value: 50, unit: N*m}
+material:
+  name: generic steel
+  yield_strength: {value: 250, unit: MPa}
+design_requirement:
+  minimum_factor_of_safety: 2
