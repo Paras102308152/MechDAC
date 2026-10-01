@@ -109,3 +109,9 @@ def test_shaft_models_reject_wrong_dimensions_and_nonpositive_requirements() -> 
 def test_sizing_rejects_zero_combined_load() -> None:
     with pytest.raises(ValueError, match="nonzero bending moment or torque"):
         solve_shaft(shaft_loading(moment=0, torque=0))
+
+
+@pytest.mark.parametrize("moment", [1e308, 1e-323])
+def test_sizing_rejects_loads_outside_float_calculation_range(moment: float) -> None:
+    with pytest.raises(ValueError, match="outside the supported numeric range"):
+        solve_shaft(shaft_loading(moment=moment, torque=0))

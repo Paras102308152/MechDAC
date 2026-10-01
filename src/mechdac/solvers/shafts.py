@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from math import pi, sqrt
+from math import hypot, isfinite, pi, sqrt
 
 from mechdac.core.results import BeamShaftDesignResult, CalculationTraceEntry, ShaftDesignResult
 from mechdac.core.schema import BeamShaftLoadingSpec, ShaftLoadingSpec
@@ -26,6 +26,12 @@ def _q(value: float, unit: str) -> QuantityValue:
     return QuantityValue(value=value, unit=unit)
 
 
+def _finite(value: float, quantity_name: str) -> float:
+    if not isfinite(value):
+        raise ValueError(f"{quantity_name} is outside the supported numeric range")
+    return value
+
+
 def solve_shaft(spec: ShaftLoadingSpec) -> ShaftDesignResult:
     """Find the minimum solid-round diameter meeting a static yield requirement.
 
@@ -35,21 +41,38 @@ def solve_shaft(spec: ShaftLoadingSpec) -> ShaftDesignResult:
     fatigue method, or stress-concentration factor is applied.
     """
 
-    moment = abs(spec.bending_moment.to("N*m"))
-    torque = abs(spec.torque.to("N*m"))
-    yield_strength = spec.material.yield_strength.to("Pa")
+    moment = abs(_finite(spec.bending_moment.to("N*m"), "bending moment"))
+    torque = abs(_finite(spec.torque.to("N*m"), "torque"))
+    yield_strength = _finite(spec.material.yield_strength.to("Pa"), "yield strength")
     target_safety_factor = spec.design_requirement.minimum_factor_of_safety
     if moment == 0 and torque == 0:
         raise ValueError("shaft sizing requires a nonzero bending moment or torque")
 
-    equivalent_stress_coefficient = sqrt(
-        (32 * moment / pi) ** 2 + 3 * (16 * torque / pi) ** 2
+    bending_coefficient = _finite(32 * moment / pi, "bending stress coefficient")
+    torsional_coefficient = _finite(16 * torque / pi, "torsional stress coefficient")
+    equivalent_stress_coefficient = _finite(
+        hypot(bending_coefficient, sqrt(3) * torsional_coefficient),
+        "equivalent stress coefficient",
     )
-    diameter = (target_safety_factor * equivalent_stress_coefficient / yield_strength) ** (1 / 3)
-    bending_stress = 32 * moment / (pi * diameter**3)
-    torsional_shear = 16 * torque / (pi * diameter**3)
-    equivalent_stress = sqrt(bending_stress**2 + 3 * torsional_shear**2)
-    factor_of_safety = yield_strength / equivalent_stress
+    required_diameter_cubed = _finite(
+        target_safety_factor * equivalent_stress_coefficient / yield_strength,
+        "required diameter",
+    )
+    if required_diameter_cubed <= 0:
+        raise ValueError("required diameter is outside the supported numeric range")
+    diameter = _finite(required_diameter_cubed ** (1 / 3), "required diameter")
+    if diameter <= 0:
+        raise ValueError("required diameter is outside the supported numeric range")
+
+    bending_stress = _finite(bending_coefficient / required_diameter_cubed, "bending stress")
+    torsional_shear = _finite(torsional_coefficient / required_diameter_cubed, "torsional stress")
+    equivalent_stress = _finite(
+        hypot(bending_stress, sqrt(3) * torsional_shear),
+        "equivalent stress",
+    )
+    if equivalent_stress <= 0:
+        raise ValueError("equivalent stress is outside the supported numeric range")
+    factor_of_safety = _finite(yield_strength / equivalent_stress, "factor of safety")
 
     trace = (
         CalculationTraceEntry(

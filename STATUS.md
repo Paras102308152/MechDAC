@@ -31,15 +31,17 @@ Phase 5 — the initial static beam/shaft workflow is complete for one vertical 
 
 - The beam solver is planar and static, with one pin and one roller, point forces, uniform distributed loads, and applied couples. It does not calculate axial effects, deflection, or stresses.
 - The shaft solver assumes a solid circular section, one critical section, static bending and torsion only, nominal stresses, and a generic von Mises yield screen. It omits stress concentrations, fatigue, axial load, deflection, and standard diameter selection.
+- Finite values outside the supported floating-point calculation range are rejected; the model does not clamp or approximate extreme magnitudes.
 - The composed workflow uses one bending plane and one beam-reported maximum-moment location. Torque must be supplied for that location. Tied maxima, torque elsewhere, and multiple bending planes are not evaluated.
 - There is no SFD/BMD plot renderer or report generator. The beam result reports one critical absolute-moment location; tied maxima may occur at multiple locations.
 
 ## Last verification
 
 - Date: 2026-10-01. Environment: Python 3.12.14, Pydantic 2.13.5, Pint 0.26.1, PyYAML 6.0.3, pytest 9.1.1.
-- Full suite: `.venv/bin/python -m pytest -q` — **43 passed in 0.39s** after reinstalling the built package. Source-tree run also passed: 43 passed in 0.89s.
+- Full suite: `.venv/bin/python -m pytest -q` — **45 passed in 0.40s** after reinstalling the built package. Source-tree run also passed: 45 passed in 0.42s.
 - Package: `.venv/bin/python -m pip install '.[dev]'` — wheel built and installed successfully.
 - Import: `import mechdac`; imports of `solve_beam`, `solve_shaft`, and `solve_shaft_from_beam` — passed.
-- Beam and standalone shaft CLI examples — passed in text mode.
+- Beam, standalone shaft, and beam-to-shaft CLI examples — passed in text mode.
 - Beam and beam-to-shaft CLI JSON outputs — parsed successfully; composed output identified the 2 m section and retained the nested shaft result.
-- `git diff HEAD --check` — passed on the final checkpoint changes.
+- Extreme finite shaft load — CLI returned exit code 2 with an explanatory range error and no traceback.
+- `git diff HEAD --check` — passed on the final follow-up changes.

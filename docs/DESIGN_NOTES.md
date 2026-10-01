@@ -40,7 +40,7 @@ The result records four auditable steps: total external vertical force, external
 
 The separate `shaft size` calculation accepts bending moment and torque at one critical section, material yield strength, and a requested minimum static factor of safety. It assumes a solid, circular, prismatic shaft under static bending and torsion only. It uses nominal elastic stresses, `σ_b = 32|M|/(πd³)` and `τ = 16|T|/(πd³)`, and a von Mises yield screen, `σ_vm = sqrt(σ_b² + 3τ²)`. The minimum diameter is solved by setting `σ_vm = S_y/n_min`. Inputs are converted to N·m and Pa, and the result reports metres, Pa, the achieved factor of safety, and each calculation step.
 
-This is a generic textbook static yield screen, not an ASME shaft rating or a fatigue design. The input moments are supplied directly; the solver does not derive a critical section from beam diagrams. It omits stress concentrations, keyways, shoulders, axial stress, deflection, fatigue, transient loads, and standard diameter selection.
+This is a generic textbook static yield screen, not an ASME shaft rating or a fatigue design. The standalone solver takes its section moments directly. A separate `size-from-beam` path uses the beam's maximum absolute moment at its reported location, as described below. The shaft model omits stress concentrations, keyways, shoulders, axial stress, deflection, fatigue, transient loads, and standard diameter selection. Finite input values outside the representable calculation range are rejected with a value error rather than producing a non-finite result.
 
 ## Beam-to-shaft composition
 
@@ -48,10 +48,10 @@ This is a generic textbook static yield screen, not an ASME shaft rating or a fa
 
 ## Serialization and units
 
-`QuantityValue` serializes as a finite scalar and a Pint unit expression. Schemas validate dimensional compatibility; the solver converts to canonical SI values before arithmetic. Pydantic JSON methods can serialize the beam input and structured result. Unknown schema fields are rejected.
+`QuantityValue` serializes as a finite scalar and a Pint unit expression. Schemas validate dimensional compatibility; the solvers convert to canonical SI values before arithmetic. Pydantic JSON methods serialize beam and shaft inputs and structured results, including both nested results from the composed workflow. Unknown schema fields are rejected.
 
-The CLI accepts a mapping at the document root, with beam fields matching `BeamSpec`. `.json` files use Python's standard JSON parser; `.yaml` and `.yml` use PyYAML's safe loader. CLI errors return exit code 2 and go to stderr. Default text output is for terminal reading; `--format json` writes the complete structured solver result to stdout.
+The CLI accepts a mapping at the document root, with fields matching `BeamSpec`, `ShaftLoadingSpec`, or `BeamShaftLoadingSpec` according to the command. `.json` files use Python's standard JSON parser; `.yaml` and `.yml` use PyYAML's safe loader. CLI errors return exit code 2 and go to stderr. Default text output is for terminal reading; `--format json` writes the complete structured solver result to stdout.
 
 ## Not implemented
 
-There is no varying distributed-load function, diagram plot renderer, beam deflection, axial force, gear force, bearing behavior, beam-to-shaft load transfer, fatigue, standards rating, CAD, optimization, or reporting. These are future decisions, not implicit behavior of the current solvers.
+There is no varying distributed-load function, diagram plot renderer, beam deflection, axial force, gear force, bearing behavior, general beam/shaft load-transfer model beyond the described one-section composition, fatigue, standards rating, CAD, optimization, or reporting. These are future decisions, not implicit behavior of the current solvers.
