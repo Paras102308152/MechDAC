@@ -20,7 +20,7 @@ Roadmap status reflects code that exists and has been verified, not planned arch
 
 ## Phase 4 — Calculation transparency
 
-**Complete for calculation transparency.** Results contain the signed external force resultant, moment about support A, reaction equations/substitutions, and numerical results with units. CLI text prints the trace and JSON includes it with piecewise SFD/BMD data. A plot renderer is deferred; output already provides exact segment coefficients without introducing a plotting dependency.
+**Complete for the initial workflow.** Results contain the signed external force resultant, moment about support A, reaction equations/substitutions, and numerical results with units. CLI text prints the trace and JSON includes it with piecewise SFD/BMD data. The optional plotting extra adds PNG/SVG diagrams by sampling the returned segment polynomials and preserving event jumps; it does not recalculate statics.
 
 ## Phase 5 — Shaft design and source validation
 
@@ -36,7 +36,7 @@ Evaluate a CAD dependency only after calculation models are stable. Any geometry
 
 ## Phase 8 — Reporting
 
-Consider SFD/BMD plots from the existing exact diagram data, followed by calculation reports and BOM output, after traceable calculations and stable structured results exist.
+The initial SFD/BMD plotting slice is complete. Calculation reports and BOM output remain deferred until there is a concrete workflow need and stable reporting requirements.
 
 ## Phase 9 — Polish and release readiness
 

@@ -1,5 +1,15 @@
 # Architecture Decisions
 
+## 2026-10-02 — Keep beam plotting optional and downstream of structured results
+
+**Decision:** Provide `mechdac beam plot` through a separate plotting adapter that consumes `BeamAnalysisResult`; install Matplotlib only through the `plotting` extra. The adapter evaluates returned segment polynomials and event-side values, leaving statics in the solver.
+
+**Reason:** SFD/BMD plots make the existing beam results easier to inspect without making Matplotlib a requirement for calculation or package imports, and without duplicating engineering calculations.
+
+**Alternatives considered:** Make Matplotlib a core dependency; recalculate diagram values in the plotting layer; defer all visual output.
+
+**Consequences:** PNG and SVG diagrams are available when the optional extra is installed. The default package import and non-plot CLI commands do not import Matplotlib. Segment curves are sampled for rendering, while event-side values preserve discontinuities at concentrated forces and couples.
+
 ## 2026-10-01 — Keep physical schemas independent of engineering equations
 
 **Decision:** Beam and load models describe geometry, directions, magnitudes, and support types. Equilibrium and diagram calculations live in solver modules.

@@ -32,6 +32,10 @@ The segment coefficients use canonical units: shear in N, shear slope in N/m, mo
 
 The solver searches event-side values and interval endpoints for peak shear/moment. Under a uniform load, it also checks the internal location where shear is zero, which is a stationary bending-moment point. Only one location is reported for a tied absolute maximum.
 
+## Beam diagram plots
+
+`mechdac beam plot INPUT --output PATH` renders the solver result as PNG or SVG when the optional `plotting` extra is installed. The plotter samples the existing segment polynomials in metres, newtons, and newton-metres and draws vertical connectors from each event's left value to its right value. It labels shear as upward-positive and bending moment as sagging-positive. The plotted samples are a visual rendering; the structured result remains the calculation record.
+
 ## Reaction calculation trace
 
 The result records four auditable steps: total external vertical force, external moment about the left support A, right support reaction from moment equilibrium, and left support reaction from vertical force equilibrium. Distributed loads are reduced to their signed resultant at the interval centroid for this equilibrium trace. Applied couples enter the moment sum directly. Each step carries the equation, substituted values, and unit-bearing result. Shear/moment interval polynomials then expose how those reactions and loads continue through the beam.
@@ -62,4 +66,4 @@ The CLI accepts a mapping at the document root, with fields matching `BeamSpec`,
 
 ## Not implemented
 
-There is no varying distributed-load function, diagram plot renderer, beam deflection, axial force, gear force, bearing behavior, general beam/shaft load-transfer model beyond the described one-section composition, fatigue, standards rating, CAD, optimization, or reporting. These are future decisions, not implicit behavior of the current solvers.
+There is no varying distributed-load function, beam deflection, axial force, gear force, bearing behavior, general beam/shaft load-transfer model beyond the described one-section composition, fatigue, standards rating, CAD, optimization, or calculation report generator. These are future decisions, not implicit behavior of the current solvers.
