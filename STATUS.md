@@ -15,6 +15,10 @@ Phase 5 — the initial static beam/shaft workflow is complete for one vertical 
 - `MaterialSpec`, `DesignRequirementSpec`, `ShaftLoadingSpec`, and `BeamShaftLoadingSpec` validate material yield strength, positive finite target factor of safety, moment units, and nested beam data.
 - `solve_shaft` sizes a solid circular section for static bending and torsion using nominal elastic stresses and the generic von Mises yield criterion. Its structured result includes diameter, stresses, actual/required factors of safety, assumptions, solver metadata, and five trace entries. It is not an ASME rating.
 - `solve_shaft_from_beam` uses the beam's maximum absolute bending moment and reported position, combines it with torque explicitly supplied at that section, and preserves both full results.
+- The existing solid-shaft equations have been source-checked against supplied Bhandari Ch. 4 §§4.2, 4.5–4.6, 4.13, and 4.17–4.18. A separate source-validation test independently computes plane-stress principal values and distortion-energy equivalent stress from the principal-stress form.
+- The shaft result assumptions now explicitly state that the material is ductile, homogeneous, isotropic, and linear-elastic up to yield; those properties cannot be inferred from a material name.
+- Bhandari Ch. 9 §9.2 nominal bending/torsion stresses agree with MechDAC; its shaft-sizing examples use maximum shear (Tresca), while MechDAC deliberately uses distortion energy (von Mises). This difference is documented; MechDAC is not presented as a Bhandari or ASME design.
+- Page-aware maps and a source ledger were added for the supplied Bhandari Chapters 4 and 9. Example 4.13 and the final strength-sizing step of Example 9.1 were independently reproduced and recorded with their method boundaries.
 - `mechdac shaft size INPUT` and `mechdac shaft size-from-beam INPUT` accept YAML/YML/JSON and emit text or structured JSON. `examples/shaft_basic.yaml` and `examples/shaft_from_beam.yaml` are generic runnable inputs.
 - Tests cover unit conversion, invalid physical values, unknown fields, serialization round-trips, analytical beam and shaft cases, combined beam/shaft results, and CLI input/output and error paths. The formerly empty unit/schema tests and shaft example are populated.
 
@@ -26,6 +30,7 @@ Phase 5 — the initial static beam/shaft workflow is complete for one vertical 
 ## Next
 
 - Evaluate an SFD/BMD plotting path using the existing exact diagram results. Keep plotting separate from calculation code and add a dependency only if the implementation needs it.
+- Keep future source-derived shaft work separate: Ch. 9 torsional rigidity, ASME design, hollow shafts, keys, splines, couplings, lateral deflection, and critical speed are mapped but not implemented.
 
 ## Known limitations
 
@@ -37,11 +42,11 @@ Phase 5 — the initial static beam/shaft workflow is complete for one vertical 
 
 ## Last verification
 
-- Date: 2026-10-01. Environment: Python 3.12.14, Pydantic 2.13.5, Pint 0.26.1, PyYAML 6.0.3, pytest 9.1.1.
-- Full suite: `.venv/bin/python -m pytest -q` — **45 passed in 0.40s** after reinstalling the built package. Source-tree run also passed: 45 passed in 0.42s.
-- Package: `.venv/bin/python -m pip install '.[dev]'` — wheel built and installed successfully.
-- Import: `import mechdac`; imports of `solve_beam`, `solve_shaft`, and `solve_shaft_from_beam` — passed.
-- Beam, standalone shaft, and beam-to-shaft CLI examples — passed in text mode.
-- Beam and beam-to-shaft CLI JSON outputs — parsed successfully; composed output identified the 2 m section and retained the nested shaft result.
-- Extreme finite shaft load — CLI returned exit code 2 with an explanatory range error and no traceback.
-- `git diff HEAD --check` — passed on the final follow-up changes.
+- Baseline before this mission, 2026-10-02: `.venv/bin/python -m pytest -q` — **45 passed in 0.42s**.
+- Final environment: Python 3.12.14, Pydantic 2.13.5, Pint 0.26.1, PyYAML 6.0.3, pytest 9.1.1.
+- Package refresh after changing the solver assumptions: `.venv/bin/python -m pip install '.[dev]'` — wheel built and local package reinstalled successfully.
+- Focused source validation: `.venv/bin/python -m pytest -q tests/test_source_validation.py` — **1 passed in 0.30s** after reinstalling the local package.
+- Full suite: `.venv/bin/python -m pytest -q` — **46 passed in 0.39s**.
+- Import check: `mechdac`, `solve_beam`, `solve_shaft`, and `solve_shaft_from_beam` — passed.
+- CLI checks: generic beam text example, standalone shaft JSON example, and composed beam-to-shaft JSON example — passed.
+- Independent source arithmetic: Ch. 4 Example 4.13 reproduced at 31.06 mm by maximum shear; the same loads give 29.93 mm through the actual MechDAC von Mises solver. Ch. 9 Example 9.1 final sizing step reproduced at 45.474 mm (printed 45.47 mm) using its maximum-shear equation.

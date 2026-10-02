@@ -22,9 +22,9 @@ Roadmap status reflects code that exists and has been verified, not planned arch
 
 **Complete for calculation transparency.** Results contain the signed external force resultant, moment about support A, reaction equations/substitutions, and numerical results with units. CLI text prints the trace and JSON includes it with piecewise SFD/BMD data. A plot renderer is deferred; output already provides exact segment coefficients without introducing a plotting dependency.
 
-## Phase 5 — Shaft design
+## Phase 5 — Shaft design and source validation
 
-**Complete for the initial static scope.** The standalone solid-round-shaft screen and a composed beam-to-shaft path use separated physical inputs, a generic von Mises yield criterion, traceable results, YAML/JSON CLI input, and analytical tests. The composed path uses the beam's single-plane maximum absolute moment and requires torque at that reported section. This is not an ASME/AGMA/ISO rating. Defer fatigue, stress concentrations, multiple bending planes, variable torque, standard-diameter tables, and broader shaft-system features until justified.
+**Complete for the initial static scope and first source-validation mission.** The standalone solid-round-shaft screen and a composed beam-to-shaft path use separated physical inputs, a generic von Mises yield criterion, traceable results, YAML/JSON CLI input, and analytical tests. Supplied Bhandari Chapters 4 and 9 are indexed; in-scope stress, factor-of-safety, and criterion equations are compared with the implementation; worked-example differences are recorded. Chapter 9 §9.2's nominal stress formulas agree, but its shaft-sizing examples use maximum shear (Tresca), not MechDAC's distortion energy (von Mises). The solver is not a Bhandari or standard-specific rating. The composed path uses the beam's single-plane maximum absolute moment and requires torque at that reported section. Defer fatigue, stress concentrations, multiple bending planes, variable torque, standard-diameter tables, and broader shaft-system features until justified.
 
 ## Phase 6 — Additional mechanical primitives
 
@@ -48,3 +48,4 @@ Improve documentation, examples, public API, CLI UX, error handling, packaging, 
 - Fatigue, stress concentrations, multiple bending planes, variable torque, standard shaft diameters, and multi-section shaft analysis
 - CAD, optimization, report/PDF generation, and AI functionality
 - Web services, databases, GUI frameworks, and complex plugin systems
+- Chapter 9 capabilities mapped but not implemented: torsional rigidity, ASME shaft design, hollow shafts, keys, splines, couplings, lateral deflection, and critical speed

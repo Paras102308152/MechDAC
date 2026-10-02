@@ -79,3 +79,13 @@
 **Alternatives considered:** Automatically infer shaft torque; combine beam moments from multiple planes without a physical model; silently select a section and omit the beam result from outputs.
 
 **Consequences:** The composition reports that torque is taken at the selected beam section. Only one reported maximum section is sized; tied peaks, other sections, and multiple bending planes are not evaluated. Both component results remain available in structured output.
+
+## 2026-10-02 — Record textbook provenance in source maps and a ledger
+
+**Decision:** Keep page-aware textbook method maps and validation statuses in `docs/sources/`; do not add a runtime provenance framework for this first source-validation mission. Verify the existing static shaft implementation against the generic distortion-energy equations in Bhandari Chapter 4, and explicitly record that Bhandari Chapter 9's worked shaft sizing uses maximum shear (Tresca).
+
+**Reason:** Source evidence and equation selection need to be durable and reviewable. The current solver already exposes its method name, assumptions, and calculation trace; a ledger is enough to record book/page provenance without coupling the solver to one textbook.
+
+**Alternatives considered:** Rename the generic method as Bhandari/ASME; implement a second failure criterion or a broad source registry in the same mission; copy textbook pages or lengthy text into the repository.
+
+**Consequences:** The generic von Mises calculation remains unchanged. The source ledger distinguishes verified equations, documented criterion differences, and future Chapter 9 capabilities. Future source-specific methods can be added as separate solver behavior only under a bounded, validated mission.

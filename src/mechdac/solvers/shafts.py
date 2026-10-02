@@ -12,6 +12,7 @@ from mechdac.solvers.beam import solve_beam
 _ASSUMPTIONS = (
     "The shaft is solid, circular, prismatic, and evaluated at one critical section.",
     "Loading is static and consists only of bending moment and torque.",
+    "The material is assumed ductile, homogeneous, isotropic, and linear-elastic up to yield.",
     "Nominal elastic stress formulas are used; stress concentrations and fatigue are excluded.",
     "Yield is screened using the von Mises distortion-energy criterion; this is not an ASME rating.",
 )
