@@ -24,6 +24,18 @@ The command prints support reactions, maximum absolute shear and bending moment,
 mechdac beam solve examples/simple_beam.yaml --format json
 ```
 
+## Plot shear and bending-moment diagrams
+
+Install the optional plotting dependency and save the solved diagrams as PNG or SVG:
+
+```bash
+python -m pip install 'mechdac[plotting]'
+mechdac beam plot examples/simple_beam.yaml --output beam-diagrams.svg
+```
+
+The plot command consumes the beam solver's structured diagram result. It preserves jumps at
+point forces and applied couples and does not display an interactive window.
+
 Input files may use `.yaml`, `.yml`, or `.json`. Quantities are expressed as mappings with a numeric `value` and Pint `unit`, such as `{value: 2, unit: m}`. See [examples/simple_beam.yaml](examples/simple_beam.yaml) for a complete input.
 
 ## Static solid-shaft screen

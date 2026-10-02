@@ -166,6 +166,16 @@ def _build_parser() -> argparse.ArgumentParser:
         default="text",
         help="output format (default: text)",
     )
+    plot_parser = beam_commands.add_parser(
+        "plot", help="plot shear-force and bending-moment diagrams"
+    )
+    plot_parser.add_argument("input", type=Path, help="beam input file (.yaml, .yml, or .json)")
+    plot_parser.add_argument(
+        "--output",
+        type=Path,
+        required=True,
+        help="output image path (.png or .svg)",
+    )
     shaft_parser = commands.add_parser("shaft", help="shaft design calculations")
     shaft_commands = shaft_parser.add_subparsers(dest="shaft_command", required=True)
     size_parser = shaft_commands.add_parser(
@@ -199,7 +209,46 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     try:
         if args.command == "beam":
-            result = solve_beam(_load_beam(args.input))
+            beam = _load_beam(args.input)
+            if args.beam_command == "solve":
+                result = solve_beam(beam)
+            else:
+                output_format = args.output.suffix.lower()
+                if output_format not in {".png", ".svg"}:
+                    print(
+                        "mechdac: error: Plot output extension must be .png or .svg",
+                        file=sys.stderr,
+                    )
+                    return 2
+                analysis = solve_beam(beam)
+                try:
+                    from mechdac.plotting.beam import plot_beam_diagrams
+                except ModuleNotFoundError as exc:
+                    if exc.name == "matplotlib" or (
+                        exc.name is not None and exc.name.startswith("matplotlib.")
+                    ):
+                        print(
+                            "mechdac: error: Beam plotting requires the optional dependency; "
+                            "install it with `pip install 'mechdac[plotting]'`",
+                            file=sys.stderr,
+                        )
+                        return 2
+                    raise
+                figure = plot_beam_diagrams(analysis)
+                try:
+                    figure.savefig(
+                        args.output,
+                        format=output_format[1:],
+                        metadata={"Date": None} if output_format == ".svg" else None,
+                    )
+                except OSError as exc:
+                    print(
+                        f"mechdac: error: Could not save beam diagrams to {args.output}: {exc}",
+                        file=sys.stderr,
+                    )
+                    return 2
+                print(f"Saved beam diagrams to {args.output}")
+                return 0
         elif args.shaft_command == "size":
             shaft = _load_shaft(args.input)
             try:

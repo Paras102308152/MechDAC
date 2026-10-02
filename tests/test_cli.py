@@ -1,4 +1,5 @@
 import json
+import sys
 
 import pytest
 
@@ -244,3 +245,62 @@ def test_cli_sizes_shaft_from_beam_input_as_text_and_structured_json(tmp_path, c
     assert result["beam_analysis"]["solver_name"] == "mechdac.beam_statics"
     assert len(result["shaft_design"]["calculation_trace"]) == 5
     assert output.err == ""
+
+
+@pytest.mark.parametrize(
+    ("suffix", "signature"),
+    ((".png", b"\x89PNG\r\n\x1a\n"), (".svg", b"<svg")),
+)
+def test_cli_saves_beam_diagrams_to_png_or_svg(tmp_path, capsys, suffix, signature) -> None:
+    input_path = tmp_path / "beam.json"
+    input_path.write_text(json.dumps(BEAM_INPUT), encoding="utf-8")
+    output_path = tmp_path / f"beam-diagrams{suffix}"
+
+    exit_code = main(
+        ["beam", "plot", str(input_path), "--output", str(output_path)]
+    )
+
+    output = capsys.readouterr()
+    contents = output_path.read_bytes()
+    assert exit_code == 0
+    assert contents.startswith(signature) if suffix == ".png" else signature in contents
+    assert "Saved beam diagrams" in output.out
+    assert output.err == ""
+
+
+def test_cli_rejects_unsupported_beam_plot_file_extension(tmp_path, capsys) -> None:
+    input_path = tmp_path / "beam.json"
+    input_path.write_text(json.dumps(BEAM_INPUT), encoding="utf-8")
+    output_path = tmp_path / "beam-diagrams.pdf"
+
+    exit_code = main(
+        ["beam", "plot", str(input_path), "--output", str(output_path)]
+    )
+
+    output = capsys.readouterr()
+    assert exit_code == 2
+    assert "Plot output extension must be .png or .svg" in output.err
+    assert not output_path.exists()
+
+
+def test_cli_explains_how_to_install_missing_plotting_dependency(
+    tmp_path, capsys, monkeypatch
+) -> None:
+    input_path = tmp_path / "beam.json"
+    input_path.write_text(json.dumps(BEAM_INPUT), encoding="utf-8")
+    output_path = tmp_path / "beam-diagrams.svg"
+    for module_name in tuple(sys.modules):
+        if module_name == "matplotlib" or module_name.startswith("matplotlib."):
+            monkeypatch.delitem(sys.modules, module_name)
+    monkeypatch.setitem(sys.modules, "matplotlib", None)
+    monkeypatch.delitem(sys.modules, "mechdac.plotting.beam", raising=False)
+    monkeypatch.delitem(sys.modules, "mechdac.plotting", raising=False)
+
+    exit_code = main(
+        ["beam", "plot", str(input_path), "--output", str(output_path)]
+    )
+
+    output = capsys.readouterr()
+    assert exit_code == 2
+    assert "pip install 'mechdac[plotting]'" in output.err
+    assert not output_path.exists()
