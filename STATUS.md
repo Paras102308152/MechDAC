@@ -4,6 +4,8 @@
 
 Phase 5 — the initial static beam/shaft workflow is complete for one vertical bending plane and one selected shaft section. Standalone shaft loading is supported, and the composed route uses the beam's reported maximum absolute bending moment with torque supplied at that same section.
 
+The additive shared input/result contracts for the Monday MVP gear, spring, and key workflows are frozen and tested. Their engineering solvers, source maps for Chapters 10/17/18, and CLI routes are not yet implemented; no new component calculation capability is claimed.
+
 ## Completed
 
 - Git repository is on `main`, with `origin` set to `https://github.com/Paras102308152/MechDAC`.
@@ -24,11 +26,11 @@ Phase 5 — the initial static beam/shaft workflow is complete for one vertical 
 
 ## In progress / deferred
 
-- Broader Phase 1 models (gear pair, bearing load, load case, and reusable check/solver result models) remain unimplemented until a concrete workflow requires them.
+- Gear, compression-spring, and shaft-key workflow implementations are not started; contracts are in place for their isolated worker modules. Bearing, generic check/solver models, and other broad Phase 1 abstractions remain deferred until a concrete workflow requires them.
 
 ## Next
 
-- Continue only with a concrete, prioritized engineering workflow; keep future source-derived shaft work separate. Ch. 9 torsional rigidity, ASME design, hollow shafts, keys, splines, couplings, lateral deflection, and critical speed are mapped but not implemented.
+- After explicit authorization, start the three isolated implementations against the frozen contracts: gear (spur/helical), static compression spring, and rectangular shaft key. Integrate solver modules before the coordinator wires CLI/docs. Ch. 9 torsional rigidity, ASME design, hollow shafts, splines, couplings, lateral deflection, and critical speed remain deferred.
 
 ## Known limitations
 
@@ -49,3 +51,4 @@ Phase 5 — the initial static beam/shaft workflow is complete for one vertical 
 - CLI checks: generic beam text example, standalone shaft JSON example, and composed beam-to-shaft JSON example — passed.
 - Independent source arithmetic: Ch. 4 Example 4.13 reproduced at 31.06 mm by maximum shear; the same loads give 29.93 mm through the actual MechDAC von Mises solver. Ch. 9 Example 9.1 final sizing step reproduced at 45.474 mm (printed 45.47 mm) using its maximum-shear equation.
 - PLOT-01 integrated on 2026-10-02 as `b450c6a17a9abfc73afd7f11f4e79baeb4bc7f32`; full suite — **54 passed**. Import check passed without importing Matplotlib; generic beam CLI produced valid PNG and SVG output.
+- Monday MVP contracts added on 2026-10-02: baseline full suite before changes — **54 passed**; focused contract tests — **14 passed**; full suite after changes — **68 passed**; package and contract import check — passed.

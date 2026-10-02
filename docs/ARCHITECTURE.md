@@ -39,6 +39,8 @@ The current modules are:
 - `mechdac.plotting.beam`: optional Matplotlib adapter that evaluates the existing result segment polynomials and uses event-side values to draw force and couple jumps. It does not recalculate statics.
 - `docs/sources/bhandari`: page-aware maps for the supplied Chapters 4 and 9 and a ledger that records equation references, validation evidence, method differences, and future capability boundaries. This is documentation/test provenance; no solver is coupled to a textbook.
 
+The Monday MVP shared contracts are frozen additively in the same schema/result modules: `SpurGearPairSpec`/`SpurGearResult`, `HelicalGearPairSpec`/`HelicalGearResult`, `CompressionSpringSpec`/`CompressionSpringResult`, and `ShaftKeySpec`/`ShaftKeyResult`. These inputs validate unit dimensions and basic physical ranges only; future calculations belong in separate solver modules. Results use unit-bearing quantities, `CalculationTraceEntry` tuples, assumptions, warnings, solver name, and version. Gear force outputs are magnitudes. The planned CLI routes are `gear spur`, `gear helical`, `spring compression`, and `key check`, each with the existing text/JSON format option; they are not wired yet. Worker ownership is limited to unique solver, test, and (for Gear and Spring) source-map files, with shared schemas, results, CLI, source ledger, and project docs retained by the coordinator. See `DECISIONS.md` for exact paths and presentation/error conventions.
+
 Packaging uses a `src/` layout. Pydantic v2 and Pint are runtime dependencies; pytest is a development extra; Matplotlib is isolated in the optional `plotting` extra. The supported Python version is 3.12 or later.
 
 ## Current modeling and calculation boundary

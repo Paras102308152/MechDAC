@@ -28,7 +28,7 @@ Roadmap status reflects code that exists and has been verified, not planned arch
 
 ## Phase 6 — Additional mechanical primitives
 
-Choose keys, bearings, gears, fasteners, springs, pressure vessels, or another component only when there is a clear user need. Do not implement a breadth-first catalog.
+**Contracts frozen; implementation pending authorization.** The current bounded MVP is external spur/helical pitch geometry and mesh-force magnitudes, static round-wire compression-spring checks, and rectangular sunk-key strength/length checks. Shared schema/result contracts are in `core.schema` and `core.results`; calculations, source-derived tests/maps, and CLI wiring remain to be delivered. Keep this as three focused vertical slices rather than beginning a broader component catalog. Bearings, fasteners, and pressure vessels remain deferred.
 
 ## Phase 7 — Parametric CAD
 

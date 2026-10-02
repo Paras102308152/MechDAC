@@ -171,3 +171,106 @@ class BeamShaftLoadingSpec(DomainModel):
             "torque at critical section",
         )
         return self
+
+
+class SpurGearPairSpec(DomainModel):
+    """Geometry and operating point for one external spur gear pair."""
+
+    module: QuantityValue
+    pinion_teeth: int = Field(gt=0)
+    gear_teeth: int = Field(gt=0)
+    pressure_angle: QuantityValue
+    input_power: QuantityValue
+    pinion_speed: QuantityValue
+
+    @model_validator(mode="after")
+    def values_are_physically_valid(self) -> SpurGearPairSpec:
+        module = _require_dimension(self.module, "m", "module")
+        angle = _require_dimension(self.pressure_angle, "degree", "pressure angle")
+        power = _require_dimension(self.input_power, "W", "input power")
+        speed = _require_dimension(self.pinion_speed, "rpm", "pinion speed")
+        if module <= 0 or power <= 0 or speed <= 0:
+            raise ValueError("module, input power, and pinion speed must be positive")
+        if not 0 < angle < 90:
+            raise ValueError("pressure angle must be between 0 and 90 degrees")
+        return self
+
+
+class HelicalGearPairSpec(DomainModel):
+    """Geometry and operating point for one external helical gear pair."""
+
+    normal_module: QuantityValue
+    pinion_teeth: int = Field(gt=0)
+    gear_teeth: int = Field(gt=0)
+    normal_pressure_angle: QuantityValue
+    helix_angle: QuantityValue
+    input_power: QuantityValue
+    pinion_speed: QuantityValue
+
+    @model_validator(mode="after")
+    def values_are_physically_valid(self) -> HelicalGearPairSpec:
+        module = _require_dimension(self.normal_module, "m", "normal module")
+        pressure = _require_dimension(
+            self.normal_pressure_angle, "degree", "normal pressure angle"
+        )
+        helix = _require_dimension(self.helix_angle, "degree", "helix angle")
+        power = _require_dimension(self.input_power, "W", "input power")
+        speed = _require_dimension(self.pinion_speed, "rpm", "pinion speed")
+        if module <= 0 or power <= 0 or speed <= 0:
+            raise ValueError("normal module, input power, and pinion speed must be positive")
+        if not 0 < pressure < 90:
+            raise ValueError("normal pressure angle must be between 0 and 90 degrees")
+        if not 0 < helix < 90:
+            raise ValueError("helix angle must be between 0 and 90 degrees")
+        return self
+
+
+class CompressionSpringSpec(DomainModel):
+    """Input for a static, round-wire compression spring check."""
+
+    load: QuantityValue
+    wire_diameter: QuantityValue
+    mean_coil_diameter: QuantityValue
+    active_coils: int = Field(gt=0)
+    shear_modulus: QuantityValue
+    allowable_shear_stress: QuantityValue
+
+    @model_validator(mode="after")
+    def values_are_physically_valid(self) -> CompressionSpringSpec:
+        load = _require_dimension(self.load, "N", "spring load")
+        wire = _require_dimension(self.wire_diameter, "m", "wire diameter")
+        mean = _require_dimension(self.mean_coil_diameter, "m", "mean coil diameter")
+        modulus = _require_dimension(self.shear_modulus, "Pa", "shear modulus")
+        allowable = _require_dimension(
+            self.allowable_shear_stress, "Pa", "allowable shear stress"
+        )
+        if min(load, wire, mean, modulus, allowable) <= 0:
+            raise ValueError("spring load, dimensions, modulus, and allowable stress must be positive")
+        if mean <= wire:
+            raise ValueError("mean coil diameter must exceed wire diameter")
+        return self
+
+
+class ShaftKeySpec(DomainModel):
+    """Input for a rectangular sunk-key torque-transfer strength check."""
+
+    torque: QuantityValue
+    shaft_diameter: QuantityValue
+    key_width: QuantityValue
+    key_height: QuantityValue
+    key_length: QuantityValue
+    material: MaterialSpec
+    design_requirement: DesignRequirementSpec
+
+    @model_validator(mode="after")
+    def values_are_physically_valid(self) -> ShaftKeySpec:
+        torque = _require_dimension(self.torque, "N*m", "torque")
+        diameter = _require_dimension(self.shaft_diameter, "m", "shaft diameter")
+        width = _require_dimension(self.key_width, "m", "key width")
+        height = _require_dimension(self.key_height, "m", "key height")
+        length = _require_dimension(self.key_length, "m", "key length")
+        if min(torque, diameter, width, height, length) <= 0:
+            raise ValueError("torque and key/shaft dimensions must be positive")
+        if width >= diameter or height >= diameter:
+            raise ValueError("key width and height must each be less than shaft diameter")
+        return self
